@@ -112,8 +112,8 @@ void loop() {
 	//float presion;
 
 	//bmp180.getEvent(&evento); // Iniciar medida
-	ds18b20.requestTemperatures();
 	if (!digitalRead(0)) { // Si se ha pulsado el botón
+		ds18b20.requestTemperatures(); 
 		temperatura = ds18b20.getTempCByIndex(0); // Obtener temperatura
 		Serial.printf("Temperatura: %f\n", temperatura);
 		//Serial.printf("Presion: %f\n\n", presion);
@@ -124,6 +124,6 @@ void loop() {
 
 		delay(1000); // Retardo para evitar procesar pulsaciones largas como varias pulsaciones
 	}
-	delay(50);
+	//delay(50);
 
 }
