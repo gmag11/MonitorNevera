@@ -70,7 +70,15 @@ void enviar_dato_thingspeak(float temperatura) {
 	//ThingSpeak.setField(2, presion);
 
 	int estado = ThingSpeak.writeFields(channelID,ApiKey);
-	Serial.printf("Enviado dato a ThingSpeak. Resultado: %d\n", estado);
+	Serial.printf("Enviado dato a ThingSpeak. Resultado: %d\n\n", estado);
+}
+
+void imprimirDireccion(DeviceAddress direccion) {
+	for (int i=0; i<8; i++) {
+		if (direccion[i] < 16)
+			Serial.print("0");
+		Serial.print(direccion[i], HEX);
+	}
 }
 
 void setup()
@@ -103,6 +111,8 @@ void setup()
 	
 	// Iniciar entrada botón
 	pinMode(BOTON, INPUT_PULLUP);
+	pinMode(2, OUTPUT);
+	digitalWrite(2, HIGH);
 	
 }
 
@@ -111,16 +121,29 @@ void loop() {
 	float temperatura;
 	//float presion;
 
+	DeviceAddress direccion;
+
 	//bmp180.getEvent(&evento); // Iniciar medida
 	if (!digitalRead(0)) { // Si se ha pulsado el botón
 		ds18b20.requestTemperatures(); 
 		temperatura = ds18b20.getTempCByIndex(0); // Obtener temperatura
-		Serial.printf("Temperatura: %f\n", temperatura);
+		
+		Serial.printf("Temperatura: %f\nDirección DS18B20: ", temperatura);
+		if (ds18b20.getAddress(direccion, 0)) {
+			imprimirDireccion(direccion);
+		}
+		else {
+			Serial.print("No encontrado");
+		}
+		Serial.print("\n\n");
 		//Serial.printf("Presion: %f\n\n", presion);
 
+		digitalWrite(2, LOW);
 		//enviar_dato_ifttt(temperatura, presion, "mail");
-		enviar_dato_ifttt(temperatura, "twitt"); // Enviar un Twitt
+		//enviar_dato_ifttt(temperatura, "twitt"); // Enviar un Twitt
 		enviar_dato_thingspeak(temperatura); // Enviar dato para dibujar gráfica en ThingSpeak
+
+		digitalWrite(2, HIGH);
 
 		delay(1000); // Retardo para evitar procesar pulsaciones largas como varias pulsaciones
 	}
