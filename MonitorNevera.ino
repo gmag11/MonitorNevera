@@ -24,11 +24,14 @@ const char *iftttFingerprint = "c0 5d 08 5e e1 3e e0 66 f3 79 27 1a ca 1f fc 09 
 
 #define BOTON 0
 
-//Adafruit_BMP085_Unified bmp180 = Adafruit_BMP085_Unified(10085); // Sensor BMP180 (presión y temperatura)
+#define PERIODO 16000
+
 OneWire oneWire(D2);
 DallasTemperature ds18b20(&oneWire);
 HTTPClient clienteHTTP; // Cliente para conectar a IFTTT
 WiFiClient clienteWiFi; // Cliente para conectar a Thingspeak
+uint numTermometros;
+
 
 void enviar_dato_ifttt(float temperatura, const char *iftttEvent) {
 	String url;
@@ -60,14 +63,14 @@ void enviar_dato_ifttt(float temperatura, const char *iftttEvent) {
 	clienteHTTP.end();
 }
 
-void enviar_dato_thingspeak(float temperatura) {
+void enviar_dato_thingspeak(float temp1, float temp2) {
 	const long channelID = 190646;
 	const char * ApiKey = "NPOQUJAEX5W4GHII";
 
 	ThingSpeak.begin(clienteWiFi);
 
-	ThingSpeak.setField(1, temperatura);
-	//ThingSpeak.setField(2, presion);
+	ThingSpeak.setField(1, temp1);
+	ThingSpeak.setField(2, temp2);
 
 	int estado = ThingSpeak.writeFields(channelID,ApiKey);
 	Serial.printf("Enviado dato a ThingSpeak. Resultado: %d\n\n", estado);
@@ -97,17 +100,12 @@ void setup()
 	Serial.println();
 	Serial.printf("IP Address: %s\n\n", WiFi.localIP().toString().c_str());
 	
-	/*// Iniciar sensor BMP180
-	sensor_t sensor;
-	bmp180.getSensor(&sensor);
-	if (!bmp180.begin(SCA_PIN, SCL_PIN)) { 
-		Serial.println("No se ha encontrado el sensor BMP180, comprueba el cableado");
-		while (1) { delay(0); }
-	}*/
-
 	//Iniciar sensor DS18B20
 	ds18b20.begin();
+	numTermometros = ds18b20.getDeviceCount();
+	Serial.printf("Encontrados %d termometros\n", numTermometros);
 	ds18b20.setResolution(TEMP_12_BIT);
+	
 	
 	// Iniciar entrada botón
 	pinMode(BOTON, INPUT_PULLUP);
@@ -117,36 +115,42 @@ void setup()
 }
 
 void loop() {
-	//sensors_event_t evento;
-	float temperatura;
-	//float presion;
+	float temp_congelador, temp_frigo;
+	static unsigned long ultimaMedida = 0;
 
 	DeviceAddress direccion;
 
-	//bmp180.getEvent(&evento); // Iniciar medida
-	if (!digitalRead(0)) { // Si se ha pulsado el botón
+	if ((millis()-ultimaMedida) > PERIODO) { // Si se ha pulsado el botón
+		Serial.println((millis() - ultimaMedida));
+		ultimaMedida = millis();
 		ds18b20.requestTemperatures(); 
-		temperatura = ds18b20.getTempCByIndex(0); // Obtener temperatura
+		temp_congelador = ds18b20.getTempCByIndex(0); // Obtener temperatura
+		temp_frigo = ds18b20.getTempCByIndex(1); // Obtener temperatura
 		
-		Serial.printf("Temperatura: %f\nDirección DS18B20: ", temperatura);
+		Serial.printf("Temperatura congelador: %f\nDirección DS18B20: ", temp_congelador);
 		if (ds18b20.getAddress(direccion, 0)) {
 			imprimirDireccion(direccion);
 		}
 		else {
 			Serial.print("No encontrado");
 		}
+		Serial.print("\n");
+		Serial.printf("Temperatura frigo: %f\nDirección DS18B20: ", temp_frigo);
+		if (ds18b20.getAddress(direccion, 1)) {
+			imprimirDireccion(direccion);
+		}
+		else {
+			Serial.print("No encontrado");
+		}
 		Serial.print("\n\n");
-		//Serial.printf("Presion: %f\n\n", presion);
 
 		digitalWrite(2, LOW);
 		//enviar_dato_ifttt(temperatura, presion, "mail");
 		//enviar_dato_ifttt(temperatura, "twitt"); // Enviar un Twitt
-		enviar_dato_thingspeak(temperatura); // Enviar dato para dibujar gráfica en ThingSpeak
+		enviar_dato_thingspeak(temp_congelador, temp_frigo); // Enviar dato para dibujar gráfica en ThingSpeak
 
 		digitalWrite(2, HIGH);
 
-		delay(1000); // Retardo para evitar procesar pulsaciones largas como varias pulsaciones
 	}
-	//delay(50);
 
 }
