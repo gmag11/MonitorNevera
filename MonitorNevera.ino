@@ -22,8 +22,6 @@ const char *iftttFingerprint = "c0 5d 08 5e e1 3e e0 66 f3 79 27 1a ca 1f fc 09 
 #define SCA_PIN 4
 #define SCL_PIN 5
 
-#define BOTON 0
-
 #define PERIODO 16000
 
 OneWire oneWire(D2);
@@ -108,7 +106,6 @@ void setup()
 	
 	
 	// Iniciar entrada botón
-	pinMode(BOTON, INPUT_PULLUP);
 	pinMode(2, OUTPUT);
 	digitalWrite(2, HIGH);
 	
@@ -144,11 +141,13 @@ void loop() {
 		}
 		Serial.print("\n\n");
 
-		digitalWrite(2, LOW);
+		
 		//enviar_dato_ifttt(temperatura, presion, "mail");
 		//enviar_dato_ifttt(temperatura, "twitt"); // Enviar un Twitt
 		enviar_dato_thingspeak(temp_congelador, temp_frigo); // Enviar dato para dibujar gráfica en ThingSpeak
 
+		digitalWrite(2, LOW);
+		delay(100);
 		digitalWrite(2, HIGH);
 
 	}
