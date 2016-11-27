@@ -128,7 +128,8 @@ void loop() {
 	float temp_congelador, temp_frigo;
 
 	// Configuración de umbrales de alarma de temperatura
-	const int umbralCongelador = -12;
+	// Hay que calcularlos de forma que estén por encima de los valores normales. Prueba y error
+	const int umbralCongelador = -8;
 	const int umbralFrigo = 12;
 
 	DeviceAddress direccion;
