@@ -183,7 +183,9 @@ void loop() {
 		}
 	}
 	
-	enviar_dato_thingspeak(temp_congelador, temp_frigo); // Enviar dato para dibujar gráfica en ThingSpeak
+	if (temp_congelador > -40 && temp_frigo > -10) { // Descartar valores erróneos, por ejemplo si desconectamos los sensores
+		enviar_dato_thingspeak(temp_congelador, temp_frigo); // Enviar dato para dibujar gráfica en ThingSpeak
+	}
 
 	// Parpadear el LED
 	digitalWrite(LED, LOW);
